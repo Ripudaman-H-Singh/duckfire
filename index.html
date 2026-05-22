@@ -4,46 +4,123 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DuckFire</title>
-  <!-- This links to Pico.css for an instant beautiful design -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  
+  <style>
+    /* --- DuckFire Permanent Forest Aesthetic --- */
+    /* By targeting :root and all possible data-themes, we destroy any light/dark mode switching. This green is now the ONLY design. */
+    :root,
+    :root[data-theme="light"],
+    :root[data-theme="dark"] {
+      --background-color: #14241d;          /* Deep forest green background */
+      --color: #e2f0e9;                     /* Soft mint-white for readable text */
+      --h1-color: #e2f0e9;                  
+      --h2-color: #e2f0e9;
+      --h3-color: #e2f0e9;
+      --muted-color: #9ab3a5;               /* Muted sage for secondary text */
+      
+      --primary: #66d9a1;                   /* Bright emerald green */
+      --primary-background: #66d9a1;        
+      --primary-border: #66d9a1;
+      --primary-hover-background: #4ec28b;  
+      --primary-hover-border: #4ec28b;
+      --primary-inverse: #14241d;           /* Dark text on bright buttons */
+      
+      --card-background-color: #1e332a;     /* Lighter green for cards */
+      --form-element-background-color: #14241d; 
+      --form-element-border-color: #2d4a3e; /* Subtle green borders */
+      --form-element-active-border-color: #66d9a1;
+      --form-element-focus-color: rgba(102, 217, 161, 0.25);
+      --border-color: #2d4a3e;
+    }
+
+    /* Hard fallback to ensure no white screens ever appear */
+    body {
+      background-color: #14241d !important;
+      color: #e2f0e9 !important;
+    }
+
+    /* Star Rating Form Styles */
+    .star-rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      font-size: 2rem;
+    }
+    .star-rating input { display: none; }
+    
+    .star-rating label { color: #9ab3a5; cursor: pointer; transition: color 0.2s; }
+    
+    .star-rating :checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { color: #ffc107; }
+    
+    /* Book Card Styles */
+    article {
+      background-color: var(--card-background-color);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); 
+      border-radius: 10px;
+      transition: transform 0.2s;
+      border: 1px solid var(--border-color); 
+    }
+    article:hover { transform: translateY(-2px); }
+  </style>
 </head>
 <body>
   <main class="container">
-    <h1>DuckFire : BookClub</h1>
+    
+    <nav>
+      <ul>
+        <li><h1>DuckFire : BookClub</h1></li>
+      </ul>
+      <ul>
+        <li><button id="open-modal-btn">Add a Book</button></li>
+      </ul>
+    </nav>
     <p>Watcha Reading ?</p>
 
-    <!-- The Form to add a new book -->
-    <article>
-      <header><strong>Add Books!</strong></header>
-      <form id="book-form">
-        <div class="grid">
-          <label for="readerName">Your Name
-            <input type="text" id="readerName" placeholder="e.g., Alice" required>
-          </label>
-          <label for="bookTitle">Book Title
-            <input type="text" id="bookTitle" placeholder="The Great Gatsby" required>
-          </label>
-          <label for="rating">Rating (1-10)
-            <input type="number" id="rating" min="1" max="10" required>
-          </label>
-        </div>
-        <label for="comments">Comments
-          <textarea id="comments" placeholder="What did you think of it?" required></textarea>
-        </label>
-        <button type="submit">Submit Book</button>
-      </form>
-    </article>
-
-    <hr>
-
-    <!-- Where the books will show up -->
-    <h2>Recent Reads</h2>
     <div id="book-list">
-      <!-- Books will be injected here by JavaScript -->
+      <p>Loading books...</p>
     </div>
+
+    <dialog id="add-book-modal">
+      <article>
+        <header>
+          <a href="#close" aria-label="Close" class="close" id="close-modal-btn"></a>
+          <strong>Add Books!</strong>
+        </header>
+        
+        <form id="book-form">
+          <div class="grid">
+            <label for="readerName">Your Name
+              <input type="text" id="readerName" placeholder="e.g., Alice" required>
+            </label>
+            <label for="bookTitle">Book Title
+              <input type="text" id="bookTitle" placeholder="The Great Gatsby" required>
+            </label>
+          </div>
+          
+          <fieldset>
+            <legend>Rating</legend>
+            <div class="star-rating">
+              <input type="radio" id="star5" name="rating" value="5" required><label for="star5">★</label>
+              <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+              <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+              <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+              <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+            </div>
+          </fieldset>
+
+          <label for="comments">Comments
+            <textarea id="comments" placeholder="What did you think of it?" required></textarea>
+          </label>
+          <button type="submit">Submit Book</button>
+        </form>
+      </article>
+    </dialog>
 
   </main>
 
-<script type="module" src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
