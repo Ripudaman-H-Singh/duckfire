@@ -7,6 +7,7 @@ const firebaseConfig = {
   storageBucket: "bluribus-fd.firebasestorage.app",
   messagingSenderId: "792236877225",
   appId: "1:792236877225:web:b715b7310a4dcfd22050b8",
+  measurementId: "G-48RSC5EB98"
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
