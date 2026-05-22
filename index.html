@@ -4,44 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Our Book Club Log</title>
-  <!-- This links to Pico.css for an instant beautiful design -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 </head>
 <body>
   <main class="container">
-    <h1>📚 Our Book Log</h1>
-    <p>Share what you've been reading!</p>
+    
+    <!-- A clean top navigation bar with the title and the button -->
+    <nav>
+      <ul>
+        <li><h1>📚 Our Book Log</h1></li>
+      </ul>
+      <ul>
+        <li><button id="open-modal-btn">Add a Book</button></li>
+      </ul>
+    </nav>
 
-    <!-- The Form to add a new book -->
-    <article>
-      <header><strong>Add a New Book</strong></header>
-      <form id="book-form">
-        <div class="grid">
-          <label for="readerName">Your Name
-            <input type="text" id="readerName" placeholder="e.g., Alice" required>
-          </label>
-          <label for="bookTitle">Book Title
-            <input type="text" id="bookTitle" placeholder="The Great Gatsby" required>
-          </label>
-          <label for="rating">Rating (1-10)
-            <input type="number" id="rating" min="1" max="10" required>
-          </label>
-        </div>
-        <label for="comments">Comments
-          <textarea id="comments" placeholder="What did you think of it?" required></textarea>
-        </label>
-        <button type="submit">Submit Book</button>
-      </form>
-    </article>
-
-    <hr>
-
-    <!-- Where the books will show up -->
-    <h2>Recent Reads</h2>
+    <!-- The Book List is now the main focus right at the top -->
     <div id="book-list">
-      <!-- Books will be injected here by JavaScript -->
+      <p>Loading books...</p>
     </div>
 
+    <!-- The form is now hidden inside this dialog box -->
+    <dialog id="add-book-modal">
+      <article>
+        <header>
+          <!-- This creates a little 'X' to close the modal -->
+          <a href="#close" aria-label="Close" class="close" id="close-modal-btn"></a>
+          <strong>Add a New Book</strong>
+        </header>
+        
+        <form id="book-form">
+          <div class="grid">
+            <label for="readerName">Your Name
+              <input type="text" id="readerName" placeholder="e.g., Alice" required>
+            </label>
+            <label for="bookTitle">Book Title
+              <input type="text" id="bookTitle" placeholder="The Great Gatsby" required>
+            </label>
+            <label for="rating">Rating (1-10)
+              <input type="number" id="rating" min="1" max="10" required>
+            </label>
+          </div>
+          <label for="comments">Comments
+            <textarea id="comments" placeholder="What did you think of it?" required></textarea>
+          </label>
+          <button type="submit">Submit Book</button>
+        </form>
+      </article>
+    </dialog>
+
   </main>
-<script type="module" src="app.js"></script></body>
+
+  <script type="module" src="app.js"></script>
+</body>
 </html>
