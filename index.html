@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Book Club Log</title>
+  <!-- This links to Pico.css for an instant beautiful design -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+  <main class="container">
+    <h1>📚 Our Book Log</h1>
+    <p>Share what you've been reading!</p>
+
+    <!-- The Form to add a new book -->
+    <article>
+      <header><strong>Add a New Book</strong></header>
+      <form id="book-form">
+        <div class="grid">
+          <label for="readerName">Your Name
+            <input type="text" id="readerName" placeholder="e.g., Alice" required>
+          </label>
+          <label for="bookTitle">Book Title
+            <input type="text" id="bookTitle" placeholder="The Great Gatsby" required>
+          </label>
+          <label for="rating">Rating (1-10)
+            <input type="number" id="rating" min="1" max="10" required>
+          </label>
+        </div>
+        <label for="comments">Comments
+          <textarea id="comments" placeholder="What did you think of it?" required></textarea>
+        </label>
+        <button type="submit">Submit Book</button>
+      </form>
+    </article>
+
+    <hr>
+
+    <!-- Where the books will show up -->
+    <h2>Recent Reads</h2>
+    <div id="book-list">
+      <!-- Books will be injected here by JavaScript -->
+    </div>
+
+  </main>
+<script type="module" src="app.js"></script></body>
+</html>
