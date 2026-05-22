@@ -1,7 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-// 1. Paste your Firebase config right here:
 const firebaseConfig = {
   apiKey: "AIzaSyBLUrj9EtCJDxmzvAFiG2qjMM41vgDvs6A",
   authDomain: "bluribus-fd.firebaseapp.com",
@@ -9,35 +7,21 @@ const firebaseConfig = {
   storageBucket: "bluribus-fd.firebasestorage.app",
   messagingSenderId: "792236877225",
   appId: "1:792236877225:web:b715b7310a4dcfd22050b8",
-  measurementId: "G-48RSC5EB98"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// Connect to all the HTML elements
 const form = document.getElementById('book-form');
 const bookList = document.getElementById('book-list');
 const modal = document.getElementById('add-book-modal');
 const openBtn = document.getElementById('open-modal-btn');
 const closeBtn = document.getElementById('close-modal-btn');
-
-// --- THE FIX: Using native HTML5 modal commands ---
-
-// Open the modal
 openBtn.addEventListener('click', () => {
     modal.showModal();
 });
-
-// Close the modal when the "X" is clicked
 closeBtn.addEventListener('click', (e) => {
     e.preventDefault(); // Stops the page from jumping
     modal.close();
 });
-
-// --------------------------------------------------
-
-// Helper function to draw the stars
 function createStarVisual(ratingNumber) {
     const num = parseInt(ratingNumber);
     let stars = "";
@@ -46,8 +30,6 @@ function createStarVisual(ratingNumber) {
     }
     return `<span style="color: #ffc107; font-size: 1.2em;">${stars}</span>`;
 }
-
-// Submit a new book
 form.addEventListener('submit', async (e) => {
     e.preventDefault(); 
     const btn = form.querySelector('button');
@@ -63,8 +45,8 @@ form.addEventListener('submit', async (e) => {
         });
         
         form.reset(); 
-        modal.close(); // Close the modal automatically after saving
-        loadBooks();  // Refresh the list
+        modal.close(); 
+        loadBooks();  
     } catch (error) {
         console.error("Error adding book: ", error);
         alert("Oops, something went wrong!");
@@ -72,8 +54,6 @@ form.addEventListener('submit', async (e) => {
         btn.textContent = "Submit Book";
     }
 });
-
-// Fetch and display books
 async function loadBooks() {
     bookList.innerHTML = '<p>Loading books...</p>'; 
     
@@ -98,6 +78,4 @@ async function loadBooks() {
         bookList.innerHTML = '<p>Error loading books. Check console.</p>';
     }
 }
-
-// Load the books when page opens
 loadBooks();
