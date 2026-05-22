@@ -1,7 +1,7 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// Paste your Firebase config right here:
 const firebaseConfig = {
   apiKey: "AIzaSyBLUrj9EtCJDxmzvAFiG2qjMM41vgDvs6A",
   authDomain: "bluribus-fd.firebaseapp.com",
@@ -12,20 +12,38 @@ const firebaseConfig = {
   measurementId: "G-48RSC5EB98"
 };
 
-
-// 3. Start up Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 4. Connect to your HTML elements
+// Connect to HTML elements
 const form = document.getElementById('book-form');
 const bookList = document.getElementById('book-list');
+const modal = document.getElementById('add-book-modal');
+const openBtn = document.getElementById('open-modal-btn');
+const closeBtn = document.getElementById('close-modal-btn');
 
-// 5. Submit a new book to the database
+// Open and Close Modal
+openBtn.addEventListener('click', () => {
+    modal.setAttribute('open', true);
+});
+
+closeBtn.addEventListener('click', () => {
+    modal.removeAttribute('open');
+});
+
+// Helper function to draw the stars
+function createStarVisual(ratingNumber) {
+    const num = parseInt(ratingNumber);
+    let stars = "";
+    for (let i = 1; i <= 5; i++) {
+        stars += (i <= num) ? "★" : "☆"; 
+    }
+    return `<span style="color: #ffc107; font-size: 1.2em;">${stars}</span>`;
+}
+
+// Submit a new book
 form.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Stops the page from reloading
-    
-    // Change the submit button so they know it's working
+    e.preventDefault(); 
     const btn = form.querySelector('button');
     btn.textContent = "Saving...";
 
@@ -33,13 +51,15 @@ form.addEventListener('submit', async (e) => {
         await addDoc(collection(db, "books"), {
             reader: document.getElementById('readerName').value,
             title: document.getElementById('bookTitle').value,
-            rating: document.getElementById('rating').value,
+            // This line specifically targets the new star radio buttons
+            rating: document.querySelector('input[name="rating"]:checked').value,
             comments: document.getElementById('comments').value,
-            timestamp: serverTimestamp() // Helps us sort them newest-first
+            timestamp: serverTimestamp() 
         });
         
-        form.reset(); // Clear the form
-        loadBooks();  // Refresh the list on the screen
+        form.reset(); 
+        modal.removeAttribute('open'); // Closes the pop-up
+        loadBooks();  // Refreshes the list
     } catch (error) {
         console.error("Error adding book: ", error);
         alert("Oops, something went wrong!");
@@ -48,22 +68,22 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-// 6. Fetch and display all books
+// Fetch and display books
 async function loadBooks() {
     bookList.innerHTML = '<p>Loading books...</p>'; 
     
     try {
-        // Get books sorted by newest first
         const q = query(collection(db, "books"), orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
         
-        bookList.innerHTML = ''; // Clear the "Loading" text
+        bookList.innerHTML = ''; 
         
         querySnapshot.forEach((doc) => {
             const book = doc.data();
             const article = document.createElement('article');
+            // Older 1-10 ratings will just show as 5 stars automatically without breaking
             article.innerHTML = `
-                <header><strong>${book.title}</strong> - Rated: ${book.rating}/10</header>
+                <header><strong>${book.title}</strong> - ${createStarVisual(book.rating)}</header>
                 <p>"${book.comments}"</p>
                 <footer><em>Read by: ${book.reader}</em></footer>
             `;
@@ -75,5 +95,5 @@ async function loadBooks() {
     }
 }
 
-// 7. Load the books automatically when the page is opened
+// Load the books when page opens
 loadBooks();
