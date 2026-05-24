@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBLUrj9EtCJDxmzvAFiG2qjMM41vgDvs6A",
@@ -14,20 +14,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-//DOM
+// DOM Elements - Stripped down to only what the Viewer needs
 const bookList = document.getElementById('book-list');
-const closeBtn = document.getElementById('close-modal-btn');
 const commentsModal = document.getElementById('comments-modal');
 const longReviewDisplayContainer = document.getElementById('long-review-display-container');
 const detailLongReview = document.getElementById('detail-long-review');
 const closeCommentsBtn = document.getElementById('close-comments-btn');
 const detailsModal = document.getElementById('details-modal');
 const closeDetailsBtn = document.getElementById('close-details-btn');
-let currentBookId = null;
-const bookTitleInput = document.getElementById('bookTitle');
-const suggestionsList = document.getElementById('suggestions-list');
-let searchTimeout = null; 
-let preFetchedCoverUrl = ""; 
+const readerFilter = document.getElementById('reader-filter');
 
 const curatedLibrary = {
     // January
@@ -92,7 +87,7 @@ const curatedLibrary = {
     "02-26": { title: "Les Misérables", author: "Victor Hugo" },
     "02-27": { title: "The Count of Monte Cristo", author: "Alexandre Dumas" },
     "02-28": { title: "The Three Musketeers", author: "Alexandre Dumas" },
-    "02-29": { title: "The Time Machine", author: "H.G. Wells" }, // Leap Year
+    "02-29": { title: "The Time Machine", author: "H.G. Wells" },
 
     // March
     "03-01": { title: "Don Quixote", author: "Miguel de Cervantes" },
@@ -449,30 +444,27 @@ async function setDailyBackground() {
         if (data.items && data.items.length > 0) {
             let coverUrl = data.items[0].volumeInfo?.imageLinks?.thumbnail;
             if (coverUrl) {
-    // Upgrade to a secure, slightly larger image link
-            coverUrl = coverUrl.replace('http:', 'https:').replace('&zoom=1', '&zoom=0');
-    // We removed the background override here!
-}
+                // Upgrade to a secure, slightly larger image link
+                coverUrl = coverUrl.replace('http:', 'https:').replace('&zoom=1', '&zoom=0');
+                // We removed the background override here!
+            }
         }
     } catch (error) {
         console.error("Failed to fetch daily cover: ", error);
     }
 }
 
-// 3. Trigger the function immediately when the page loads
+// Trigger the function immediately when the page loads
 setDailyBackground();
+
 // Modal Toggles
-closeCommentsBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    commentsModal.close();
-});
-closeBtn.addEventListener('click', (e) => {
-    e.preventDefault(); 
-    modal.close();
-});
 closeDetailsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     detailsModal.close();
+});
+closeCommentsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    commentsModal.close();
 });
 
 // Star Rating Helper
@@ -484,120 +476,7 @@ function createStarVisual(ratingNumber) {
     }
     return `<span style="color: #ffc107; font-size: 1.2em;">${stars}</span>`;
 }
-// Live Search Dropdown Logic
-bookTitleInput.addEventListener('input', (e) => {
-    const query = e.target.value.trim();
-    clearTimeout(searchTimeout); // Reset the timer on each keystroke
-    
-    // Hide dropdown if they delete the text
-    if (query.length < 3) {
-        suggestionsList.style.display = 'none';
-        return;
-    }
 
-    // Wait 500ms after they stop typing before pinging the API
-    searchTimeout = setTimeout(async () => {
-        try {
-            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=5&key=AIzaSyD1KdbXzv4xCpy5a6VfA5Gyio6ctRwf5Ek`);
-            const data = await response.json();
-            
-            suggestionsList.innerHTML = ''; // Clear old results
-            
-            if (data.items && data.items.length > 0) {
-                data.items.forEach(item => {
-                    const title = item.volumeInfo.title;
-                    const author = item.volumeInfo.authors ? item.volumeInfo.authors[0] : 'Unknown Author';
-                    let thumb = item.volumeInfo.imageLinks?.thumbnail ? item.volumeInfo.imageLinks.thumbnail.replace('http:', 'https:') : 'https://via.placeholder.com/32x48.png?text=No+Cover&bg=1e332a&text_color=e2f0e9';
-                    
-                    const li = document.createElement('li');
-                    li.style.padding = '10px';
-                    li.style.borderBottom = '1px solid var(--border-color)';
-                    li.style.cursor = 'pointer';
-                    li.style.display = 'flex';
-                    li.style.alignItems = 'center';
-                    li.style.gap = '15px';
-                    
-                    li.innerHTML = `
-                        <img src="${thumb}" alt="thumbnail" style="width: 32px; height: 48px; object-fit: cover; border-radius: 2px;">
-                        <div>
-                            <strong style="color: var(--text-main); display: block; font-size: 0.9rem; margin-bottom: 2px;">${title}</strong>
-                            <small style="color: var(--accent-color); font-size: 0.8rem;">${author}</small>
-                        </div>
-                    `;
-                    
-                    // Add hover effect
-                    li.addEventListener('mouseenter', () => li.style.backgroundColor = '#523924');
-                    li.addEventListener('mouseleave', () => li.style.backgroundColor = 'transparent');                    
-                    // When a user clicks a suggestion
-                    li.addEventListener('click', () => {
-                        bookTitleInput.value = title; // Autofill the input
-                        preFetchedCoverUrl = thumb; // Save the cover image instantly
-                        suggestionsList.style.display = 'none'; // Hide the dropdown
-                    });
-                    
-                    suggestionsList.appendChild(li);
-                });
-                suggestionsList.style.display = 'block';
-            } else {
-                suggestionsList.style.display = 'none';
-            }
-        } catch (err) {
-            console.error("Live search failed:", err);
-        }
-    }, 500);
-});
-
-// Close the dropdown if the user clicks anywhere else on the page
-document.addEventListener('click', (e) => {
-    if (!bookTitleInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-        suggestionsList.style.display = 'none';
-    }
-});
-// Add New Book & Fetch Cover API
-// Add New Book
-form.addEventListener('submit', async (e) => {
-    e.preventDefault(); 
-    const btn = form.querySelector('button');
-    btn.textContent = "Saving...";
-
-    const titleVal = document.getElementById('bookTitle').value;
-    let fetchedCoverUrl = preFetchedCoverUrl; // Use the image they clicked in the dropdown
-
-    // Fallback: If they typed a name but didn't click the dropdown, fetch it now
-    if (!fetchedCoverUrl) {
-        try {
-            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(titleVal)}&key=AIzaSyD1KdbXzv4xCpy5a6VfA5Gyio6ctRwf5Ek`);
-            const data = await response.json();
-            if (data.items && data.items.length > 0) {
-                const rawUrl = data.items[0].volumeInfo?.imageLinks?.thumbnail;
-                if (rawUrl) fetchedCoverUrl = rawUrl.replace('http:', 'https:');
-            }
-        } catch (apiError) {
-            console.error("API fallback failed: ", apiError);
-        }
-    }
-
-    try {
-        await addDoc(collection(db, "books"), {
-            reader: document.getElementById('readerName').value,
-            title: titleVal,
-            rating: document.querySelector('input[name="rating"]:checked').value,
-            comments: document.getElementById('comments').value,
-            coverUrl: fetchedCoverUrl, 
-            timestamp: serverTimestamp() 
-        });
-        
-        form.reset(); 
-        preFetchedCoverUrl = ""; // Reset the saved image for the next entry
-        modal.close(); 
-        loadBooks();  
-    } catch (error) {
-        console.error("Error adding book: ", error);
-        alert("Oops, something went wrong!");
-    } finally {
-        btn.textContent = "Submit Book";
-    }
-});
 // Load & Render Books with Covers
 async function loadBooks() {
     bookList.innerHTML = '<p style="color: var(--text-muted);">Loading books...</p>'; 
@@ -615,48 +494,41 @@ async function loadBooks() {
             article.setAttribute('data-reader', book.reader || 'Unknown');
             
             article.style.cursor = 'pointer';
-            article.style.padding = '1rem';
-            
-            // Default placeholder if the API didn't find a cover
+            article.style.padding = '0'; 
+            article.style.overflow = 'hidden';
+
             const displayCover = book.coverUrl || 'https://via.placeholder.com/128x192.png?text=No+Cover&bg=1e332a&text_color=e2f0e9';
 
-            // Injecting the Cover Image into the List Layout
-// Remove default padding so the split sections can stretch to the edges
-article.style.padding = '0'; 
-article.style.overflow = 'hidden';
+            // Top Half: Book Details
+            const detailsDiv = document.createElement('div');
+            detailsDiv.style.padding = '1rem';
+            detailsDiv.innerHTML = `
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="${displayCover}" class="book-cover" alt="Cover">
+                    <div style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; flex-direction: column;">
+                            <h4 style="margin: 0 0 6px 0; line-height: 1.2;">${book.title}</h4>
+                            <small style="color: var(--text-muted);">by ${book.reader || 'Unknown'}</small>
+                        </div>
+                        <div style="margin-top: 0; white-space: nowrap;">${createStarVisual(book.rating)}</div>
+                    </div>
+                </div>
+            `;
+            detailsDiv.addEventListener('click', () => openBookDetails(book));
 
-// Top Half: Book Details
-const detailsDiv = document.createElement('div');
-detailsDiv.style.padding = '1rem';
-detailsDiv.innerHTML = `
-    <div style="display: flex; gap: 15px; align-items: center;">
-        <img src="${displayCover}" class="book-cover" alt="Cover">
-        <div style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; flex-direction: column;">
-                <h4 style="margin: 0 0 6px 0; line-height: 1.2;">${book.title}</h4>
-                <small style="color: var(--text-muted);">by ${book.reader || 'Unknown'}</small>
-            </div>
-            <div style="margin-top: 0; white-space: nowrap;">${createStarVisual(book.rating)}</div>
-        </div>
-    </div>
-`;
-detailsDiv.addEventListener('click', () => openBookDetails(bookId, book));
+            // Bottom Half: Comments Divider
+            const commentsDiv = document.createElement('div');
+            commentsDiv.style.padding = '0.75rem 1rem';
+            commentsDiv.style.borderTop = '1px solid var(--border-color)';
+            commentsDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.15)'; 
+            commentsDiv.style.fontSize = '0.9rem';
+            commentsDiv.style.color = 'var(--accent-color)';
+            const commentCount = book.discussion ? book.discussion.length : 0;
+            commentsDiv.innerHTML = `Read Discussion (${commentCount})`;
+            commentsDiv.addEventListener('click', () => openCommentsThread(book));
 
-// Bottom Half: Comments Divider
-const commentsDiv = document.createElement('div');
-commentsDiv.style.padding = '0.75rem 1rem';
-commentsDiv.style.borderTop = '1px solid var(--border-color)';
-commentsDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.15)'; // Subtle darkening
-commentsDiv.style.fontSize = '0.9rem';
-commentsDiv.style.color = 'var(--accent-color)';
-const commentCount = book.discussion ? book.discussion.length : 0;
-commentsDiv.innerHTML = `Discuss the Book (${commentCount})`;
-commentsDiv.addEventListener('click', () => openCommentsThread(bookId, book));
-
-// Add both halves to the card
-article.appendChild(detailsDiv);
-article.appendChild(commentsDiv);
-bookList.appendChild(article);
+            article.appendChild(detailsDiv);
+            article.appendChild(commentsDiv);
             bookList.appendChild(article);
         });
     } catch (error) {
@@ -665,17 +537,12 @@ bookList.appendChild(article);
     }
 }
 
-// Open Details & Comments Modal
-// Function 1: Opens the Top Details Modal
-function openBookDetails(id, bookData) {
-    currentBookId = id; // Set the ID so the form knows where to save
-    
-    // Set basic text details
+// Function 1: Opens the Top Details Modal (Read-Only)
+function openBookDetails(bookData) {
     document.getElementById('detail-title').textContent = bookData.title;
     document.getElementById('detail-author').textContent = `Read by: ${bookData.reader || 'Unknown'}`;
     document.getElementById('detail-review').textContent = `"${bookData.comments || 'No initial review.'}"`;
     
-    // Set the cover image in the modal
     const coverEl = document.getElementById('detail-cover');
     if (bookData.coverUrl) {
         coverEl.src = bookData.coverUrl;
@@ -684,25 +551,18 @@ function openBookDetails(id, bookData) {
         coverEl.style.display = 'none';
     }
 
-    // Handle Long Review Display Logic
     if (bookData.longReview) {
-        // If a long review exists, show it and hide the input form
         longReviewDisplayContainer.style.display = 'block';
         detailLongReview.textContent = bookData.longReview;
-        longReviewForm.style.display = 'none';
     } else {
-        // If no long review exists, show the input form and clear it
         longReviewDisplayContainer.style.display = 'none';
-        longReviewForm.style.display = 'block';
-        longReviewInput.value = '';
     }
     
     detailsModal.showModal();
 }
 
-// Function 2: Opens the Bottom Discussion Modal
-function openCommentsThread(id, bookData) {
-    currentBookId = id; // Set the ID so the form knows where to save new comments
+// Function 2: Opens the Bottom Discussion Modal (Read-Only)
+function openCommentsThread(bookData) {
     const commentsList = document.getElementById('comments-list');
     commentsList.innerHTML = '';
 
@@ -717,55 +577,19 @@ function openCommentsThread(id, bookData) {
             `;
         });
     } else {
-        commentsList.innerHTML = '<p style="color: var(--text-muted);">No comments yet. Be the first!</p>';
+        commentsList.innerHTML = '<p style="color: var(--text-muted);">No comments yet.</p>';
     }
     
     commentsModal.showModal();
 }
 
-// Add a New Comment
-commentForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentBookId) return;
-
-    const newCommentText = document.getElementById('new-comment').value;
-    const bookRef = doc(db, "books", currentBookId);
-    const btn = commentForm.querySelector('button');
-    btn.textContent = "...";
-
-try {
-        await updateDoc(bookRef, {
-            discussion: arrayUnion({
-                text: newCommentText,
-                timestamp: Date.now()
-            })
-        });
-        
-        document.getElementById('new-comment').value = ''; 
-        detailsModal.close(); 
-        loadBooks(); 
-    } catch (error) {
-        console.error("Error adding comment: ", error);
-    } finally {
-        btn.textContent = "Post";
-    }
-}); // <-- Make sure the comment form closes BEFORE the filter logic starts!
-
 // Live Reader Filter Logic
-const readerFilter = document.getElementById('reader-filter');
-
 readerFilter.addEventListener('input', (e) => {
-    // Grab what the user typed and make it lowercase
     const filterText = e.target.value.toLowerCase().trim();
-    
-    // Grab all the book cards currently on the screen
     const articles = bookList.querySelectorAll('article');
     
     articles.forEach(article => {
-        // Read the secret data tag we added in Step 2
         const readerName = article.getAttribute('data-reader').toLowerCase();
-        
-        // If the reader's name includes the typed text, show it. Otherwise, hide it.
         if (readerName.includes(filterText)) {
             article.style.display = 'block';
         } else {
@@ -774,52 +598,5 @@ readerFilter.addEventListener('input', (e) => {
     });
 });
 
-// Add a Long-Form Review
-longReviewForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentBookId) return;
-
-    const newLongReviewText = longReviewInput.value;
-    const bookRef = doc(db, "books", currentBookId);
-    const btn = longReviewForm.querySelector('button');
-    
-    btn.textContent = "Saving...";
-
-    try {
-        // Push the new long review field to the specific book in Firebase
-        await updateDoc(bookRef, {
-            longReview: newLongReviewText
-        });
-
-        // Instantly update the UI so they don't have to close the modal
-        longReviewDisplayContainer.style.display = 'block';
-        detailLongReview.textContent = newLongReviewText;
-        longReviewForm.style.display = 'none';
-
-        // Reload the books in the background to ensure data is perfectly synced
-        loadBooks();
-    } catch (error) {
-        console.error("Error adding long review: ", error);
-        alert("Oops, something went wrong saving your review!");
-    } finally {
-        btn.textContent = "Save Review";
-    }
-});
-
-// Edit Long-Form Review Logic
-editLongReviewBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    
-    // Hide the static display text
-    longReviewDisplayContainer.style.display = 'none';
-    
-    // Show the input form
-    longReviewForm.style.display = 'block';
-    
-    // Pre-fill the text box with their existing review so they don't have to start over
-    longReviewInput.value = detailLongReview.textContent;
-    
-    // Optional aesthetic touch: change the save button text to make it clear they are updating
-    longReviewForm.querySelector('button').textContent = "Update Review";
-});
+// Initialize App
 loadBooks();
